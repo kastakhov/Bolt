@@ -3,8 +3,8 @@ import tempfile
 
 
 def prompt(default=None):
-    editor = 'nano'
-    with tempfile.NamedTemporaryFile(mode='r+') as tmpfile:
+    editor = "nano"
+    with tempfile.NamedTemporaryFile(mode="r+") as tmpfile:
         if default:
             tmpfile.write(default)
             tmpfile.flush()

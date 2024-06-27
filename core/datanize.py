@@ -10,25 +10,25 @@ def datanize(forms, tolerate=False):
         data = {}
         login = False
         protected = False
-        action = oneForm['action']
-        method = oneForm['method']
-        inputs = oneForm['inputs']
+        action = oneForm["action"]
+        method = oneForm["method"]
+        inputs = oneForm["inputs"]
         for inp in inputs:
-            name = inp['name']
-            kind = inp['type']
-            value = inp['value']
+            name = inp["name"]
+            kind = inp["type"]
+            value = inp["value"]
             if re.match(tokenPattern, value):
                 protected = True
-            if kind == 'password':
+            if kind == "password":
                 data[name] = password
                 login = True
-            if kind == 'email':
+            if kind == "email":
                 data[name] = email
-            if kind == 'text':
+            if kind == "text":
                 data[name] = random.choice(strings)
             else:
                 data[name] = value
-        if method == 'GET':
+        if method == "GET":
             GET = True
         else:
             GET = False

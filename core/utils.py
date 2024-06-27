@@ -14,20 +14,20 @@ def longestCommonSubstring(s1, s2):
                     x_longest = x
             else:
                 m[x][y] = 0
-    return s1[x_longest - longest: x_longest]
+    return s1[x_longest - longest : x_longest]
 
 
 def stringToBinary(string):
-    return ''.join(format(ord(x), 'b') for x in string)
+    return "".join(format(ord(x), "b") for x in string)
 
 
 def strength(string):
-    digits = re.findall(r'\d', string)
-    lowerAlphas = re.findall(r'[a-z]', string)
-    upperAlphas = re.findall(r'[A-Z]', string)
+    digits = re.findall(r"\d", string)
+    lowerAlphas = re.findall(r"[a-z]", string)
+    upperAlphas = re.findall(r"[A-Z]", string)
     entropy = len(set(digits + lowerAlphas + upperAlphas))
     if not digits:
-        entropy = entropy/2
+        entropy = entropy / 2
     return entropy
 
 
@@ -35,25 +35,25 @@ def isProtected(parsed):
     protected = False
     parsedForms = list(parsed.values())
     for oneForm in parsedForms:
-        inputs = oneForm['inputs']
+        inputs = oneForm["inputs"]
         for inp in inputs:
-            name = inp['name']
-            kind = inp['type']
-            value = inp['value']
+            name = inp["name"]
+            kind = inp["type"]
+            value = inp["value"]
             if re.match(tokenPattern, value):
                 protected = True
     return protected
 
 
 def extractHeaders(headers):
-    headers = headers.replace('\\n', '\n')
+    headers = headers.replace("\\n", "\n")
     sorted_headers = {}
-    matches = re.findall(r'(.*):\s(.*)', headers)
+    matches = re.findall(r"(.*):\s(.*)", headers)
     for match in matches:
         header = match[0]
         value = match[1]
         try:
-            if value[-1] == ',':
+            if value[-1] == ",":
                 value = value[:-1]
             sorted_headers[header] = value
         except IndexError:
@@ -63,7 +63,7 @@ def extractHeaders(headers):
 
 def getUrl(url, data, GET):
     if GET:
-        return url.split('?')[0]
+        return url.split("?")[0]
     else:
         return url
 
@@ -71,15 +71,15 @@ def getUrl(url, data, GET):
 def getParams(url, data, GET):
     params = {}
     if GET:
-        if '=' in url:
-            data = url.split('?')[1]
-            if data[:1] == '?':
+        if "=" in url:
+            data = url.split("?")[1]
+            if data[:1] == "?":
                 data = data[1:]
         else:
-            data = ''
-    parts = data.split('&')
+            data = ""
+    parts = data.split("&")
     for part in parts:
-        each = part.split('=')
+        each = part.split("=")
         try:
             params[each[0]] = each[1]
         except IndexError:
@@ -88,10 +88,10 @@ def getParams(url, data, GET):
 
 
 def remove_file(url):
-    if url.count('/') > 2:
-        replacable = re.search(r'/[^/]*?$', url).group()
-        if replacable != '/':
-            return url.replace(replacable, '')
+    if url.count("/") > 2:
+        replacable = re.search(r"/[^/]*?$", url).group()
+        if replacable != "/":
+            return url.replace(replacable, "")
         else:
             return url
     else:

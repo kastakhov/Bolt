@@ -10,13 +10,13 @@ def evaluate(dataset, weakTokens, tokenDatabase, allTokens, insecureForms):
             localTokens = set()
             for each in page.values():
                 protected = False
-                action = each['action']
-                method = each['method']
-                inputs = each['inputs']
+                action = each["action"]
+                method = each["method"]
+                inputs = each["inputs"]
                 for inp in inputs:
-                    name = inp['name']
-                    value = inp['value']
-                    if value and match(r'^[\w\-_]+$', value):
+                    name = inp["name"]
+                    value = inp["value"]
+                    if value and match(r"^[\w\-_]+$", value):
                         if strength(value) > 10:
                             localTokens.add(value)
                             protected = True
