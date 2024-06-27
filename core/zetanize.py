@@ -1,8 +1,10 @@
+"""zetanize"""
 import re
 from urllib.parse import urlparse
 
 
 def zetanize(url, response):
+    """zetanize"""
     parsedUrl = urlparse(url)
     mainUrl = parsedUrl.scheme + "://" + parsedUrl.netloc
 
@@ -16,6 +18,7 @@ def zetanize(url, response):
     forms = {}
     matches = re.findall(r"(?i)(?s)<form.*?</form.*?>", response)
     num = 0
+
     for match in matches:
         page = re.search(r'(?i)action=[\'"](.*?)[\'"]', match)
         method = re.search(r'(?i)method=[\'"](.*?)[\'"]', match)
@@ -26,13 +29,15 @@ def zetanize(url, response):
                 action = mainUrl + action
             else:
                 action = mainUrl + "/" + action
+
         forms[num]["action"] = action.replace("&amp;", "&") if page else ""
         forms[num]["method"] = d(e(method.group(1)).lower()) if method else "get"
         forms[num]["inputs"] = []
         inputs = re.findall(r"(?i)(?s)<input.*?>", response)
+
         for inp in inputs:
             inpName = re.search(r'(?i)name=[\'"](.*?)[\'"]', inp)
-            if inpName:
+            if inpName is not None:
                 inpType = re.search(r'(?i)type=[\'"](.*?)[\'"]', inp)
                 inpValue = re.search(r'(?i)value=[\'"](.*?)[\'"]', inp)
                 inpName = d(e(inpName.group(1)))
@@ -43,4 +48,5 @@ def zetanize(url, response):
                 inpDict = {"name": inpName, "type": inpType, "value": inpValue}
                 forms[num]["inputs"].append(inpDict)
         num += 1
+
     return forms

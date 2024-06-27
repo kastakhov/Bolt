@@ -1,34 +1,7 @@
-from core.colors import green, yellow, end, run, good, info, bad, white, red
+"""bolt"""
 
-lightning = "\033[93;5m⚡\033[0m"
-
-
-def banner():
-    print(
-        """
-     %s⚡ %sBOLT%s  ⚡%s
-    """
-        % (yellow, white, yellow, end)
-    )
-
-
-banner()
-
-try:
-    import concurrent.futures
-    from pathlib import Path
-except:
-    print("%s Bolt is not compatible with python 2. Please run it with python 3." % bad)
-
-try:
-    from fuzzywuzzy import fuzz, process
-except:
-    import os
-
-    print("%s fuzzywuzzy library is not installed, installing now." % info)
-    os.system("pip3 install fuzzywuzzy")
-    print("%s fuzzywuzzy has been installed, please restart Bolt." % info)
-    quit()
+import concurrent.futures
+from pathlib import Path
 
 import argparse
 import json
@@ -36,6 +9,7 @@ import random
 import re
 import statistics
 
+from fuzzywuzzy import fuzz, process
 from core.entropy import isRandom
 from core.datanize import datanize
 from core.prompt import prompt
@@ -52,6 +26,23 @@ from core.utils import (
     stringToBinary,
     longestCommonSubstring,
 )
+
+
+from core.colors import green, yellow, end, run, good, info, bad, white, red
+
+lightning = "\033[93;5m⚡\033[0m"
+
+
+def banner():
+    """banner"""
+    print(
+        f"""
+     {yellow}⚡ {white}BOLT{yellow}  ⚡{end}
+    """
+    )
+
+
+banner()
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-u", help="target url", dest="target")
@@ -133,11 +124,11 @@ if len(uniqueTokens) < len(allTokens):
         print("%s Further investigation shows that it was a false positive.")
 
 p = Path(__file__).parent.joinpath("db/hashes.json")
-with p.open("r") as f:
+with p.open("r", encoding="latin1") as f:
     hashPatterns = json.load(f)
 
 if not allTokens:
-    print("%s No CSRF protection to test" % bad)
+    print(f"{bad} No CSRF protection to test")
     quit()
 
 aToken = allTokens[0]
@@ -148,13 +139,15 @@ for element in hashPatterns:
         for name in element["matches"]:
             matches.append(name)
 if matches:
-    print("%s Token matches the pattern of following hash type(s):" % info)
+    print(f"{info} Token matches the pattern of following hash type(s):")
     for name in matches:
-        print("    %s>%s %s" % (yellow, end, name))
+        print(f"    {yellow}>{end} {name}")
 
 
 def fuzzy(tokens):
+    """fuzzy"""
     averages = []
+
     for token in tokens:
         sameTokenRemoved = False
         result = process.extract(token, tokens, scorer=fuzz.partial_ratio)
@@ -167,6 +160,7 @@ def fuzzy(tokens):
             scores.append(score)
         average = statistics.mean(scores)
         averages.append(average)
+
     return statistics.mean(averages)
 
 
@@ -182,10 +176,13 @@ except statistics.StatisticsError:
 
 
 def staticParts(allTokens):
+    """staticParts"""
     strings = list(set(allTokens.copy()))
     commonSubstrings = {}
+
     for theString in strings:
         strings.remove(theString)
+
         for string in strings:
             commonSubstring = longestCommonSubstring(theString, string)
             if commonSubstring not in commonSubstrings:
@@ -195,26 +192,28 @@ def staticParts(allTokens):
                     commonSubstrings[commonSubstring].append(theString)
                 if string not in commonSubstrings[commonSubstring]:
                     commonSubstrings[commonSubstring].append(string)
+
     return commonSubstrings
 
 
 result = {k: v for k, v in staticParts(allTokens).items() if v}
 
 if result:
-    print("%s Common substring found" % info)
+    print(f"{info} Common substring found")
     print(json.dumps(result, indent=4))
 
 simTokens = []
 
-print(" %s Phase: Observing %s[%s4/6%s]%s" % (lightning, green, end, green, end))
-print("%s 100 simultaneous requests are being made, please wait." % info)
+print(f" {lightning} Phase: Observing {green}[{end}4/6{green}]{end}")
+print(f"{info} 100 simultaneous requests are being made, please wait.")
 
 
 def extractForms(url):
+    """extractForms"""
     response = requester(url, {}, headers, True, 0).text
     forms = zetanize(url, response)
+
     for each in forms.values():
-        localTokens = set()
         inputs = each["inputs"]
         for inp in inputs:
             value = inp["value"]
@@ -235,96 +234,102 @@ futures = (
     threadpool.submit(extractForms, goodCandidate)
     for goodCandidate in [goodCandidate] * 30
 )
-for i in concurrent.futures.as_completed(futures):
+
+for _ in concurrent.futures.as_completed(futures):
     pass
 
 if simTokens:
     if len(set(simTokens)) < len(simTokens):
-        print("%s Same tokens were issued for simultaneous requests." % good)
+        print(f"{good} Same tokens were issued for simultaneous requests.")
     else:
         print(simTokens)
 else:
-    print("%s Different tokens were issued for simultaneous requests." % info)
+    print(f"{info} Different tokens were issued for simultaneous requests.")
 
-print(" %s Phase: Testing %s[%s5/6%s]%s" % (lightning, green, end, green, end))
+print(f" {lightning} Phase: Testing {green}[{end}5/6{green}]{end}")
 
 parsed = ""
 found = False
-print("%s Finding a suitable form for further testing. It may take a while." % run)
+
+print(f"{run} Finding a suitable form for further testing. It may take a while.")
 for form_dict in allForms:
     for url, forms in form_dict.items():
         parsed = datanize(forms, tolerate=True)
         if parsed:
             found = True
             break
+
     if found:
         break
 
 if not parsed:
-    quit("%s No suitable form found for testing." % bad)
+    quit(f"{bad} No suitable form found for testing.")
 
 origGET = parsed[0]
 origUrl = parsed[1]
 origData = parsed[2]
 
-print("%s Making a request with CSRF token for comparison." % run)
+print(f"{run} Making a request with CSRF token for comparison.")
 response = requester(origUrl, origData, headers, origGET, 0)
 originalCode = response.status_code
 originalLength = len(response.text)
-print("%s Status Code: %s" % (info, originalCode))
-print("%s Content Length: %i" % (info, originalLength))
-print("%s Checking if the resonse is dynamic." % run)
+print(f"{info} Status Code: {originalCode}")
+print(f"{info} Content Length: {originalLength}")
+print(f"{run} Checking if the resonse is dynamic.")
+
 response = requester(origUrl, origData, headers, origGET, 0)
 secondLength = len(response.text)
+
 if originalLength != secondLength:
-    print("%s Response is dynamic." % info)
+    print(f"{info} Response is dynamic.")
     tolerableDifference = abs(originalLength - secondLength)
 else:
-    print("%s Response isn't dynamic." % info)
+    print(f"{info} Response isn't dynamic.")
     tolerableDifference = 0
 
-print("%s Emulating a mobile browser" % run)
-print("%s Making a request with mobile browser" % run)
+print(f"{run} Emulating a mobile browser")
+print(f"{run} Making a request with mobile browser")
 headers["User-Agent"] = "Mozilla/4.0 (compatible; MSIE 5.5; Windows CE; PPC; 240x320)"
 response = requester(origUrl, {}, headers, True, 0).text
 parsed = zetanize(origUrl, response)
-if isProtected(parsed):
-    print("%s CSRF protection is enabled for mobile browsers as well." % bad)
-else:
-    print("%s CSRF protection isn't enabled for mobile browsers." % good)
 
-print("%s Making a request without CSRF token parameter." % run)
+if isProtected(parsed):
+    print(f"{bad} CSRF protection is enabled for mobile browsers as well.")
+else:
+    print(f"{good} CSRF protection isn't enabled for mobile browsers.")
+
+print(f"{run} Making a request without CSRF token parameter.")
 
 data = tweaker(origData, "remove")
 response = requester(origUrl, data, headers, origGET, 0)
 if response.status_code == originalCode:
     if str(originalCode)[0] in ["4", "5"]:
-        print("%s It didn't work" % bad)
+        print(f"{bad} It didn't work")
     else:
         difference = abs(originalLength - len(response.text))
         if difference <= tolerableDifference:
-            print("%s It worked!" % good)
+            print(f"{good} It worked!")
 else:
-    print("%s It didn't work" % bad)
+    print(f"{bad} It didn't work")
 
-print("%s Making a request without CSRF token parameter value." % run)
+print(f"{run} Making a request without CSRF token parameter value.")
 data = tweaker(origData, "clear")
 
 response = requester(origUrl, data, headers, origGET, 0)
 if response.status_code == originalCode:
     if str(originalCode)[0] in ["4", "5"]:
-        print("%s It didn't work" % bad)
+        print(f"{bad} It didn't work")
     else:
         difference = abs(originalLength - len(response.text))
         if difference <= tolerableDifference:
-            print("%s It worked!" % good)
+            print(f"{good} It worked!")
 else:
-    print("%s It didn't work" % bad)
+    print(f"{bad} It didn't work")
 
 
 seeds = ranger(allTokens)
 
-print("%s Checking if tokens are checked to a specific length" % run)
+print(f"{run} Checking if tokens are checked to a specific length")
 
 for index in range(len(allTokens[0])):
     data = tweaker(origData, "replace", index=index, seeds=seeds)
@@ -335,34 +340,32 @@ for index in range(len(allTokens[0])):
         else:
             difference = abs(originalLength - len(response.text))
             if difference <= tolerableDifference:
-                print(
-                    "%s Last %i chars of token aren't being checked" % (good, index + 1)
-                )
+                print(f"{good} Last {index+1} chars of token aren't being checked")
     else:
         break
 
-print("%s Generating a fake token." % run)
+print(f"{run} Generating a fake token.")
 
 data = tweaker(origData, "generate", seeds=seeds)
-print("%s Making a request with the self generated token." % run)
+print(f"{run} Making a request with the self generated token.")
 
 response = requester(origUrl, data, headers, origGET, 0)
 if response.status_code == originalCode:
     if str(originalCode)[0] in ["4", "5"]:
-        print("%s It didn't work" % bad)
+        print(f"{bad} It didn't work")
     else:
         difference = abs(originalLength - len(response.text))
         if difference <= tolerableDifference:
-            print("%s It worked!" % good)
+            print(f"{good} It worked!")
 else:
-    print("%s It didn't work" % bad)
+    print(f"{bad} It didn't work")
 
-print(" %s Phase: Analysing %s[%s6/6%s]%s" % (lightning, green, end, green, end))
+print(f" {lightning} Phase: Analysing {green}[{end}6/6{green}]{end}")
 
 binary = stringToBinary("".join(allTokens))
 result = isRandom(binary)
 for name, result in result.items():
     if not result:
-        print("%s %s : %s%s%s" % (good, name, green, "non-random", end))
+        print(f"{good} {name} : {green}non-random{end}")
     else:
-        print("%s %s : %s%s%s" % (bad, name, red, "random", end))
+        print(f"{bad} {name} : {red}random{end}")

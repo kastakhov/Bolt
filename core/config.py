@@ -1,3 +1,4 @@
+"""config"""
 password = "xXx!69!xXx"
 email = "testing@gmail.com"
 strings = [

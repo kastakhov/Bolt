@@ -1,3 +1,4 @@
+"""colors"""
 import sys
 
 colors = True  # Output should be colored
