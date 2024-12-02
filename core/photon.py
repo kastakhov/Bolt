@@ -22,16 +22,18 @@ def photon(seedUrl, headers, depth, threadCount):
         processed.add(url)
         urlPrint = (url + (" " * 60))[:60]
         print("%s Parsing %-40s" % (run, urlPrint), end="\r")
-        url = getUrl(url, "", True)
+        base_url = getUrl(url, "", True)
         params = getParams(url, "", True)
         if "=" in url:
             inps = []
             for name, value in params.items():
                 inps.append({"name": name, "value": value})
-            forms.append({url: {0: {"action": url, "method": "get", "inputs": inps}}})
+            forms.append(
+                {"url": {0: {"action": base_url, "method": "get", "inputs": inps}}}
+            )
 
-        response = requester(url, params, headers, True, 0).text
-        forms.append({url: zetanize(url, response)})
+        response = requester(base_url, params, headers, True, 0).text
+        forms.append({"url": zetanize(base_url, response)})
         matches = findall(r'<[aA][^>]*?(href|HREF)=["\']{0,1}(.*?)["\']', response)
 
         for link in matches:  # iterate over the matches
@@ -57,7 +59,7 @@ def photon(seedUrl, headers, depth, threadCount):
     for _ in range(depth):
         urls = storage - processed
         threadpool = concurrent.futures.ThreadPoolExecutor(max_workers=10)
-        futures = (threadpool.submit(rec, url) for url in urls)
+        futures = (threadpool.submit(rec, url_item) for url_item in urls)
         for _ in concurrent.futures.as_completed(futures):
             pass
 
