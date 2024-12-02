@@ -1,5 +1,5 @@
-numpy
-scipy
-requests
 fuzzywuzzy
+numpy
 python-Levenshtein
+requests
+scipy
